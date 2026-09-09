@@ -37,12 +37,6 @@ julia> getproperties((10,20))
         NamedTuple{fnames}(ntuple(i -> getproperty(obj, fnames[i]), length(fnames)))
     end
     ```
-    (Older docs showed a `getproperty.(Ref(obj), fnames)` form; that is only a
-    semantic sketch. The default implementation intentionally does **not** use
-    broadcast: broadcasting over property-name tuples compiles MethodInstances
-    that are easily invalidated by packages that add `BroadcastStyle` methods,
-    and rebuilding them under `@recompile_invalidations` can hit Julia
-    inference recursion limits.)
 2. `getproperties` is defined in relation to `setproperties` so that:
    ```julia
    obj == setproperties(obj, getproperties(obj))
@@ -52,6 +46,4 @@ julia> getproperties((10,20))
 
 # Implementation
 
-`getproperties` is defined by default for all objects. When `propertynames(obj)`
-is identical to `fieldnames(typeof(obj))`, it delegates to the generated
-[`getfields`](@ref) path. It should be very rare that a custom type `MyType`, has to implement `getproperties(obj::MyType)`. Reasons to do so are undefined fields or performance considerations.
+`getproperties` is defined by default for all objects. It should be very rare that a custom type `MyType`, has to implement `getproperties(obj::MyType)`. Reasons to do so are undefined fields or performance considerations.
