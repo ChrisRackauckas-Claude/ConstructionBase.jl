@@ -74,17 +74,8 @@ end
 tuple_or_ntuple(::Type, names, vals) = error("Only Int and Symbol propertynames are supported")
 
 # Prefer a generated getfield/getproperty expansion over broadcasting across the
-# property-name tuple. The previous
-# `getproperty.((obj,), fnames)` / `getfield.((obj,), fnames)` form compiles
-# broadcast + `convert` MethodInstances on fully open object types paired with
-# `NTuple{N,Symbol}` (or similar) name tuples. Those instances are fragile under
-# method invalidation: loading packages that add `BroadcastStyle` methods
-# (notably Symbolics.jl) can invalidate them, and
-# `PrecompileTools.@recompile_invalidations` then tries to rebuild them —
-# hitting Julia's `irinterp is unable to handle heavy recursion correctly`
-# assertion (https://discourse.julialang.org/t/139291, SciML/SciMLBase.jl#1595).
-# A generated `getfield`/`getproperty` splat keeps the same semantics without
-# those broadcast edges.
+# property-name tuple. Broadcasting gave type-inference recursion limit issues.
+# See https://discourse.julialang.org/t/139291, SciML/SciMLBase.jl#1595
 @generated function getfields(obj::T) where {T}
     names = fieldnames(T)
     vals = Expr(:tuple, (:(getfield(obj, $(QuoteNode(n)))) for n in names)...)
