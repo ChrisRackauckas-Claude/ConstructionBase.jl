@@ -30,10 +30,13 @@ Semantically `getfields` boils down to `getfield` and `fieldnames`:
 ```julia
 function getfields(obj::T) where {T}
     fnames = fieldnames(T)
-    NamedTuple{fnames}(getfield.(Ref(obj), fnames))
+    NamedTuple{fnames}(ntuple(i -> getfield(obj, fnames[i]), length(fnames)))
 end
 ```
-However the actual implementation can be more optimized. For builtin types, there can also be deviations from this semantics:
+However the actual implementation can be more optimized (the default is a
+`@generated` expansion of `getfield` calls). Broadcasting over the field-name
+tuple is intentionally avoided: it compiles broadcast/`convert` MethodInstances
+that are fragile under `BroadcastStyle` invalidations. For builtin types, there can also be deviations from this semantics:
 * `getfields(::Tuple)::Tuple` since `Tuples` don't have symbolic fieldnames
 * There are some types in `Base` that have `undef` fields. Since accessing these results in an error, `getfields` instead just omits these.
 
@@ -45,7 +48,7 @@ equivalent to
 ```julia
 function getfields(obj::T) where {T}
     fnames = fieldnames(T)
-    NamedTuple{fnames}(getfield.(Ref(obj), fnames))
+    NamedTuple{fnames}(ntuple(i -> getfield(obj, fnames[i]), length(fnames)))
 end
 ```
 even if that includes private fields of `obj`.
